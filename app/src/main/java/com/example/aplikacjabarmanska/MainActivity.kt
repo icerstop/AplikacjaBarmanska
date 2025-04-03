@@ -5,19 +5,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModelProvider
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.*
+import com.example.aplikacjabarmanska.screens.CocktailDetailScreen
+import com.example.aplikacjabarmanska.screens.CocktailListScreen
 import com.example.aplikacjabarmanska.screens.CocktailViewModel
 import com.example.aplikacjabarmanska.ui.theme.AplikacjaBarmanskaTheme
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.saveable.rememberSaveable
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,38 +29,34 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AplikacjaBarmanskaTheme {
-                CocktailListScreen(viewModel)
+                val tablet = isTablet()
+                var selectedId by rememberSaveable { mutableStateOf<Int?>(null) }
+
+                if (tablet) {
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            CocktailListScreen(viewModel = viewModel) { id -> selectedId = id }
+                        }
+                        Box(modifier = Modifier.weight(2f).padding(16.dp)) {
+                            selectedId?.let {
+                                CocktailDetailScreen(cocktailId = it)
+                            }
+                        }
+                    }
+                } else {
+                    CocktailListScreen(viewModel = viewModel) { id ->
+                        val intent = Intent(this, com.example.aplikacjabarmanska.screens.DetailActivity::class.java)
+                        intent.putExtra("cocktailId", id)
+                        startActivity(intent)
+                    }
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CocktailListScreen(viewModel: CocktailViewModel) {
-    val cocktails by viewModel.cocktails.collectAsState()
-    val context = LocalContext.current
-
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Koktajle") })
-        }
-    ) { padding ->
-        LazyColumn(modifier = Modifier.padding(padding)) {
-            items(items = cocktails) { cocktail ->
-                Text(
-                    text = cocktail.name,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            val intent = Intent(context, com.example.aplikacjabarmanska.screens.DetailActivity::class.java)
-                            intent.putExtra("cocktailId", cocktail.id)
-                            context.startActivity(intent)
-                        }
-                        .padding(16.dp),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
-        }
-    }
+fun isTablet(): Boolean {
+    val configuration = LocalConfiguration.current
+    return configuration.screenWidthDp >= 600
 }

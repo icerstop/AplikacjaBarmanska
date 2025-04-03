@@ -24,6 +24,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".screens.DetailActivity" />
-    </application>
 
+    </application>
+    <supports-screens
+        android:largeScreens="true"
+        android:xlargeScreens="true"/>
 </manifest>

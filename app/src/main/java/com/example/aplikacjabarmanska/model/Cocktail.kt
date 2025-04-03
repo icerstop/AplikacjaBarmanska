@@ -8,5 +8,6 @@ data class Cocktail(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
     val ingredients: String,
-    val instructions: String
+    val instructions: String,
+    val imageResId: Int = 0
 )

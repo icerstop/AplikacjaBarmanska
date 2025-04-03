@@ -25,9 +25,7 @@ class CocktailViewModel(application: Application) : AndroidViewModel(application
             )
 
         viewModelScope.launch {
-            if (repo.getCocktails().isEmpty()) {
-                repo.insertInitialData()
-            }
+            repo.resetAndInsertData()
         }
     }
 
