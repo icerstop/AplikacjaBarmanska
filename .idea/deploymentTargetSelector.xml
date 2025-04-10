@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="AplikacjaBarmanska">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-04-03T19:18:56.782277300Z">
+        <DropdownSelection timestamp="2025-04-10T15:28:23.940835300Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Kubol\.android\avd\Medium_Phone.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Kubol\.android\avd\Medium_Tablet.avd" />
             </handle>
           </Target>
         </DropdownSelection>

@@ -20,11 +20,25 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.NavigateBefore
+import com.example.aplikacjabarmanska.isTablet
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 
 class DetailActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val isTablet = resources.configuration.screenWidthDp >= 600
+        if (isTablet) {
+            finish()
+            return
+        }
 
         val cocktailId = intent.getIntExtra("cocktailId", -1)
 
@@ -40,7 +54,9 @@ class DetailActivity : ComponentActivity() {
 @Composable
 fun CocktailDetailScreen(cocktailId: Int) {
     val context = LocalContext.current
+    val isTablet = isTablet()
     var cocktail by remember { mutableStateOf<Cocktail?>(null) }
+    val scrollState = rememberScrollState()
 
     LaunchedEffect(cocktailId) {
         val db = CocktailDatabase.getDatabase(context)
@@ -58,6 +74,16 @@ fun CocktailDetailScreen(cocktailId: Int) {
                         fontFamily = FontFamily.SansSerif
                     )
                 },
+                navigationIcon = {
+                    if(!isTablet){
+                        IconButton(onClick = { (context as? ComponentActivity)?.finish()}){
+                            Icon(
+                                imageVector = Icons.Default.ChevronLeft,
+                                contentDescription = "Wróć",
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xffe6e2dc),
                     titleContentColor = Color.Black
@@ -71,6 +97,8 @@ fun CocktailDetailScreen(cocktailId: Int) {
                 modifier = Modifier
                     .padding(padding)
                     .padding(16.dp)
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
             ) {
                 // Obraz drinka
                 Image(
