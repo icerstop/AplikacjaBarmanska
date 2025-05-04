@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import android.content.Intent
 import android.content.Context
+import androidx.activity.compose.BackHandler
 
 
 class DetailActivity : ComponentActivity() {
@@ -59,6 +60,9 @@ class DetailActivity : ComponentActivity() {
 
         setContent {
             AplikacjaBarmanskaTheme {
+                BackHandler {
+                    finish()
+                }
                 CocktailDetailScreenWithTimer(cocktailId, timerViewModel)
             }
         }
@@ -82,32 +86,6 @@ fun CocktailDetailScreenWithTimer(cocktailId: Int, timerViewModel: TimerViewMode
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        cocktail?.name ?: "Szczegóły koktajlu",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.SansSerif
-                    )
-                },
-                navigationIcon = {
-                    if(!isTablet){
-                        IconButton(onClick = { (context as? ComponentActivity)?.finish()}){
-                            Icon(
-                                imageVector = Icons.Default.ChevronLeft,
-                                contentDescription = "Wróć",
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xffc6bbae),
-                    titleContentColor = Color.Black
-                )
-            )
-        },
         floatingActionButton = {
             cocktail?.let {
                 FloatingActionButton(
@@ -125,38 +103,68 @@ fun CocktailDetailScreenWithTimer(cocktailId: Int, timerViewModel: TimerViewMode
             Column(
                 modifier = Modifier
                     .padding(padding)
-                    .padding(16.dp)
                     .fillMaxSize()
                     .verticalScroll(scrollState)
             ) {
-                // Obraz drinka
-                Image(
-                    painter = painterResource(id = cocktail!!.imageResId),
-                    contentDescription = cocktail!!.name,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                // TopAppBar wewnątrz przewijalnej kolumny
+                TopAppBar(
+                    title = {
+                        Text(
+                            cocktail?.name ?: "Szczegóły koktajlu",
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.SansSerif
+                        )
+                    },
+                    navigationIcon = {
+                        if(!isTablet){
+                            IconButton(onClick = { (context as? ComponentActivity)?.finish()}){
+                                Icon(
+                                    imageVector = Icons.Default.ChevronLeft,
+                                    contentDescription = "Wróć",
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xffc6bbae),
+                        titleContentColor = Color.Black
+                    )
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                // Reszta zawartości
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    // Obraz drinka
+                    Image(
+                        painter = painterResource(id = cocktail!!.imageResId),
+                        contentDescription = cocktail!!.name,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                    )
 
-                // Tekstowe informacje
-                Text("Składniki:", style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(4.dp))
-                Text(cocktail!!.ingredients, style = MaterialTheme.typography.bodyLarge)
-                Spacer(Modifier.height(12.dp))
-                Text("Sposób przygotowania:\n${cocktail!!.instructions}")
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    // Tekstowe informacje
+                    Text("Składniki:", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(4.dp))
+                    Text(cocktail!!.ingredients, style = MaterialTheme.typography.bodyLarge)
+                    Spacer(Modifier.height(12.dp))
+                    Text("Sposób przygotowania:\n${cocktail!!.instructions}")
 
-                CocktailTimer(
-                    formattedTime = formattedTime,
-                    isRunning = isRunning,
-                    onStart = { seconds -> timerViewModel.startTimer(seconds) },
-                    onStop = { timerViewModel.stopTimer() },
-                    onReset = { timerViewModel.resetTimer()}
-                )
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    CocktailTimer(
+                        formattedTime = formattedTime,
+                        isRunning = isRunning,
+                        onStart = { seconds -> timerViewModel.startTimer(seconds) },
+                        onStop = { timerViewModel.stopTimer() },
+                        onReset = { timerViewModel.resetTimer()}
+                    )
+                }
             }
         } else {
             Text("Nie znaleziono koktajlu", modifier = Modifier.padding(16.dp))

@@ -17,15 +17,34 @@ class CocktailViewModel(application: Application) : AndroidViewModel(application
     private val _selectedCategory = MutableStateFlow<String?>(null)
     val selectedCategory: StateFlow<String?> = _selectedCategory.asStateFlow()
 
-    val filteredCocktails: StateFlow<List<Cocktail>> = _selectedCategory
-        .combine(_cocktails) { category, allCocktails ->
-            when (category) {
-                "drink" -> allCocktails.filter { it.category == "drink" }
-                "shot" -> allCocktails.filter { it.category == "shot" }
-                "soft" -> allCocktails.filter { it.category == "soft" }
-                else -> allCocktails
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    val filteredCocktails: StateFlow<List<Cocktail>> = combine(
+        _selectedCategory,
+        _cocktails,
+        _searchQuery
+    ) { category, allCocktails, query ->
+        val categoryFiltered = when (category) {
+            "drink" -> allCocktails.filter { it.category == "drink" }
+            "shot" -> allCocktails.filter { it.category == "shot" }
+            "soft" -> allCocktails.filter { it.category == "soft" }
+            else -> allCocktails
+        }
+
+        if (query.isEmpty()) {
+            categoryFiltered
+        } else {
+            categoryFiltered.filter { cocktail ->
+                cocktail.name.contains(query, ignoreCase = true) ||
+                        cocktail.ingredients.contains(query, ignoreCase = true) ||
+                        cocktail.instructions.contains(query, ignoreCase = true)
             }
         }
+    }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
@@ -49,5 +68,16 @@ class CocktailViewModel(application: Application) : AndroidViewModel(application
 
     fun selectCategory(category: String?) {
         _selectedCategory.value = category
+    }
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun setSearching(isSearching: Boolean) {
+        _isSearching.value = isSearching
+        if (!isSearching) {
+            _searchQuery.value = ""
+        }
     }
 }

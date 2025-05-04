@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.example.aplikacjabarmanska.screens.CategorySelectionScreen
+import androidx.activity.compose.BackHandler
 
 class MainActivity : ComponentActivity() {
 
@@ -47,6 +48,12 @@ class MainActivity : ComponentActivity() {
                     selectedId?.let { id  ->
                         timerViewModel.setCocktailId(id)
                     }
+                }
+
+                BackHandler(enabled = selectedCategory != null) {
+                    selectedCategory = null
+                    viewModel.selectCategory(null)
+                    selectedId = null
                 }
 
                 if (tablet) {
