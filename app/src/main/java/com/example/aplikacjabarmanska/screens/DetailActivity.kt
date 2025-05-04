@@ -22,15 +22,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.NavigateBefore
 import com.example.aplikacjabarmanska.isTablet
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import com.example.aplikacjabarmanska.components.CocktailTimer
+import androidx.lifecycle.ViewModelProvider
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 
 
 class DetailActivity : ComponentActivity() {
+    private lateinit var timerViewModel: TimerViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -42,9 +47,16 @@ class DetailActivity : ComponentActivity() {
 
         val cocktailId = intent.getIntExtra("cocktailId", -1)
 
+        timerViewModel = ViewModelProvider(
+            this,
+            ViewModelProvider.AndroidViewModelFactory(application)
+        )[TimerViewModel::class.java]
+
+        timerViewModel.setCocktailId(cocktailId)
+
         setContent {
             AplikacjaBarmanskaTheme {
-                CocktailDetailScreen(cocktailId)
+                CocktailDetailScreenWithTimer(cocktailId, timerViewModel)
             }
         }
     }
@@ -52,11 +64,14 @@ class DetailActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CocktailDetailScreen(cocktailId: Int) {
+fun CocktailDetailScreenWithTimer(cocktailId: Int, timerViewModel: TimerViewModel) {
     val context = LocalContext.current
     val isTablet = isTablet()
     var cocktail by remember { mutableStateOf<Cocktail?>(null) }
     val scrollState = rememberScrollState()
+
+    val formattedTime by timerViewModel.formattedTime.collectAsState()
+    val isRunning by timerViewModel.isRunning.collectAsState()
 
     LaunchedEffect(cocktailId) {
         val db = CocktailDatabase.getDatabase(context)
@@ -85,7 +100,7 @@ fun CocktailDetailScreen(cocktailId: Int) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xffe6e2dc),
+                    containerColor = Color(0xffc6bbae),
                     titleContentColor = Color.Black
                 )
             )
@@ -118,6 +133,16 @@ fun CocktailDetailScreen(cocktailId: Int) {
                 Text(cocktail!!.ingredients, style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(12.dp))
                 Text("Sposób przygotowania:\n${cocktail!!.instructions}")
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                CocktailTimer(
+                    formattedTime = formattedTime,
+                    isRunning = isRunning,
+                    onStart = { seconds -> timerViewModel.startTimer(seconds) },
+                    onStop = { timerViewModel.stopTimer() },
+                    onReset = { timerViewModel.resetTimer()}
+                )
             }
         } else {
             Text("Nie znaleziono koktajlu", modifier = Modifier.padding(16.dp))
