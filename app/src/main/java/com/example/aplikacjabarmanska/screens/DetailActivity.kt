@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import com.example.aplikacjabarmanska.isTablet
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -31,6 +32,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import android.content.Intent
+import android.content.Context
 
 
 class DetailActivity : ComponentActivity() {
@@ -105,6 +108,17 @@ fun CocktailDetailScreenWithTimer(cocktailId: Int, timerViewModel: TimerViewMode
                 )
             )
         },
+        floatingActionButton = {
+            cocktail?.let {
+                FloatingActionButton(
+                    onClick = { shareIngredients(context, it)},
+                    containerColor = Color(0xFF988B78),
+                    contentColor = Color.White
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = "Udostępnij składniki")
+                }
+            }
+        },
         containerColor = Color(0xffe6e2dc)
     ) { padding ->
         if (cocktail != null) {
@@ -146,6 +160,44 @@ fun CocktailDetailScreenWithTimer(cocktailId: Int, timerViewModel: TimerViewMode
             }
         } else {
             Text("Nie znaleziono koktajlu", modifier = Modifier.padding(16.dp))
+        }
+    }
+}
+
+private fun shareIngredients(context: Context, cocktail: Cocktail) {
+    val message = """
+        Skladniki na ${cocktail.name}:
+        ${cocktail.ingredients}
+        
+        Sposób przygotowania:
+        ${cocktail.instructions}
+    """.trimIndent()
+
+    val smsIntent = Intent(Intent.ACTION_SENDTO).apply {
+        data = android.net.Uri.parse("smsto:")
+        putExtra("sms_body", message)
+    }
+
+    if (smsIntent.resolveActivity(context.packageManager) != null) {
+        val sendIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, message)
+            type = "text/plain"
+        }
+        val chooserIntent = Intent.createChooser(sendIntent, "Udostępnij składniki przez:")
+        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(smsIntent))
+
+        context.startActivity(chooserIntent)
+    } else {
+        val sendIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, message)
+            type = "text/plain"
+        }
+        val shareIntent = Intent.createChooser(sendIntent, "Udostępnij składniki przez:")
+
+        if (shareIntent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(shareIntent)
         }
     }
 }

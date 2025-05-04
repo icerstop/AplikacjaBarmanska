@@ -32,7 +32,7 @@ fun CocktailListScreen(
             TopAppBar(
                 title = { Text("Koktajle")},
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xffc6bbae),
+                    containerColor = Color(0xFF8C7F6A),
                     titleContentColor = Color.Black
                 )
                 )
