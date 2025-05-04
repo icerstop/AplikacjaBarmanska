@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.example.aplikacjabarmanska.screens.CategorySelectionScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -40,6 +41,7 @@ class MainActivity : ComponentActivity() {
             AplikacjaBarmanskaTheme {
                 val tablet = isTablet()
                 var selectedId by rememberSaveable { mutableStateOf<Int?>(null) }
+                var selectedCategory by rememberSaveable { mutableStateOf<String?>(null) }
 
                 LaunchedEffect(selectedId) {
                     selectedId?.let { id  ->
@@ -48,21 +50,53 @@ class MainActivity : ComponentActivity() {
                 }
 
                 if (tablet) {
-                    Row(modifier = Modifier.fillMaxSize()) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            CocktailListScreen(viewModel = viewModel) { id -> selectedId = id }
+                    if (selectedCategory == null) {
+                        // Gdy nie wybrano kategorii, pokazuj ekran kategorii na całej szerokości
+                        CategorySelectionScreen { category ->
+                            selectedCategory = category
+                            viewModel.selectCategory(category)
                         }
-                        Box(modifier = Modifier.weight(2f).padding(16.dp)) {
-                            selectedId?.let {
-                                CocktailDetailScreenWithTimer(cocktailId = it, timerViewModel = timerViewModel)
+                    } else {
+                        // Po wybraniu kategorii, pokazuj standardowy układ z podziałem
+                        Row(modifier = Modifier.fillMaxSize()) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                CocktailListScreen(
+                                    viewModel = viewModel,
+                                    onCocktailSelected = { id -> selectedId = id },
+                                    onBackToCategories = {
+                                        selectedCategory = null
+                                        viewModel.selectCategory(null)
+                                        selectedId = null // Resetuj również wybrany koktajl
+                                    }
+                                )
+                            }
+                            Box(modifier = Modifier.weight(2f).padding(16.dp)) {
+                                selectedId?.let {
+                                    CocktailDetailScreenWithTimer(cocktailId = it, timerViewModel = timerViewModel)
+                                }
                             }
                         }
                     }
                 } else {
-                    CocktailListScreen(viewModel = viewModel) { id ->
-                        val intent = Intent(this, com.example.aplikacjabarmanska.screens.DetailActivity::class.java)
-                        intent.putExtra("cocktailId", id)
-                        startActivity(intent)
+                    // Kod dla telefonu
+                    if (selectedCategory == null) {
+                        CategorySelectionScreen { category ->
+                            selectedCategory = category
+                            viewModel.selectCategory(category)
+                        }
+                    } else {
+                        CocktailListScreen(
+                            viewModel = viewModel,
+                            onCocktailSelected = { id ->
+                                val intent = Intent(this, com.example.aplikacjabarmanska.screens.DetailActivity::class.java)
+                                intent.putExtra("cocktailId", id)
+                                startActivity(intent)
+                            },
+                            onBackToCategories = {
+                                selectedCategory = null
+                                viewModel.selectCategory(null)
+                            }
+                        )
                     }
                 }
             }

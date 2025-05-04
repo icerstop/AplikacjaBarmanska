@@ -17,25 +17,43 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
-
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CocktailListScreen(
     viewModel: CocktailViewModel,
-    onCocktailSelected: (Int) -> Unit
+    onCocktailSelected: (Int) -> Unit,
+    onBackToCategories: () -> Unit
 ) {
-    val cocktails by viewModel.cocktails.collectAsState()
+    val cocktails by viewModel.filteredCocktails.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Koktajle")},
+                title = {
+                    Text(when(selectedCategory) {
+                        "drink" -> "Drinki"
+                        "shot" -> "Shoty"
+                        "soft" -> "Bezalkoholowe"
+                        else -> "Koktajle"
+                    })
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackToCategories) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Powrót do kategorii"
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF8C7F6A),
                     titleContentColor = Color.Black
                 )
-                )
+            )
         },
         containerColor = Color(0xffe6e2dc)
     ) { padding ->
@@ -65,7 +83,6 @@ fun CocktailListScreen(
                                 .padding(end = 16.dp)
                                 .size(96.dp)
                                 .clip(RoundedCornerShape(12.dp))
-
                         )
                         Column {
                             Text(

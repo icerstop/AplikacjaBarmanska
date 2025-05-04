@@ -19,4 +19,7 @@ interface CocktailDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(cocktails: List<Cocktail>)
+
+    @Query("SELECT * FROM cocktails WHERE category = :category")
+    fun observeByCategory(category: String): Flow<List<Cocktail>>
 }
