@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -11,6 +13,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import com.example.aplikacjabarmanska.data.ThemeManager
+import com.example.aplikacjabarmanska.ui.theme.LightAppBarColor
+import com.example.aplikacjabarmanska.ui.theme.DarkAppBarColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,17 +28,31 @@ fun CategorySelectionScreen(
     val configuration = LocalConfiguration.current
     val isTablet = configuration.screenWidthDp >= 600
 
+    // ThemeManager do kontroli trybu ciemnego
+    val themeManager = ThemeManager.getInstance()
+    val isDarkMode by themeManager.isDarkTheme.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Wybierz kategorię") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF8C7F6A),
-                    titleContentColor = Color.Black
-                )
+                    containerColor = if (isDarkMode) DarkAppBarColor else LightAppBarColor,
+                    titleContentColor = if (isDarkMode) Color.White else Color.Black
+                ),
+                actions = {
+                    // Przełącznik trybu ciemnego
+                    IconButton(onClick = { themeManager.toggleTheme() }) {
+                        Icon(
+                            imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = if (isDarkMode) "Przełącz na tryb jasny" else "Przełącz na tryb ciemny",
+                            tint = if (isDarkMode) Color.White else Color.Black
+                        )
+                    }
+                }
             )
         },
-        containerColor = Color(0xffe6e2dc)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -44,7 +66,8 @@ fun CategorySelectionScreen(
                 text = "Co chcesz przygotować?",
                 fontSize = if (isTablet) 32.sp else 24.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = if (isTablet) 48.dp else 32.dp)
+                modifier = Modifier.padding(bottom = if (isTablet) 48.dp else 32.dp),
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             if (isTablet) {

@@ -26,11 +26,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import com.example.aplikacjabarmanska.data.ThemeManager
+import com.example.aplikacjabarmanska.ui.theme.LightAppBarColor
+import com.example.aplikacjabarmanska.ui.theme.DarkAppBarColor
+import com.example.aplikacjabarmanska.ui.theme.LightSurface
+import com.example.aplikacjabarmanska.ui.theme.DarkSurfaceContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +52,10 @@ fun CocktailListScreen(
     val isSearching by viewModel.isSearching.collectAsState()
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
+
+    // ThemeManager do kontroli trybu ciemnego
+    val themeManager = ThemeManager.getInstance()
+    val isDarkMode by themeManager.isDarkTheme.collectAsState()
 
     // Automatycznie focus na pole tekstowe gdy włączamy wyszukiwanie
     LaunchedEffect(isSearching) {
@@ -102,8 +113,8 @@ fun CocktailListScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF8C7F6A),
-                        titleContentColor = Color.Black
+                        containerColor = if (isDarkMode) DarkAppBarColor else LightAppBarColor,
+                        titleContentColor = if (isDarkMode) Color.White else Color.Black
                     )
                 )
             } else {
@@ -121,11 +132,21 @@ fun CocktailListScreen(
                         IconButton(onClick = onBackToCategories) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Powrót do kategorii"
+                                contentDescription = "Powrót do kategorii",
+                                tint = if (isDarkMode) Color.White else Color.Black
                             )
                         }
                     },
                     actions = {
+                        // Przełącznik trybu ciemnego
+                        IconButton(onClick = { themeManager.toggleTheme() }) {
+                            Icon(
+                                imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                contentDescription = if (isDarkMode) "Przełącz na tryb jasny" else "Przełącz na tryb ciemny",
+                                tint = if (isDarkMode) Color.White else Color.Black
+                            )
+                        }
+
                         IconButton(onClick = { viewModel.setSearching(true) }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
@@ -134,13 +155,13 @@ fun CocktailListScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF8C7F6A),
-                        titleContentColor = Color.Black
+                        containerColor = if (isDarkMode) DarkAppBarColor else LightAppBarColor,
+                        titleContentColor = if (isDarkMode) Color.White else Color.Black
                     )
                 )
             }
         },
-        containerColor = Color(0xffe6e2dc)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (cocktails.isEmpty() && searchQuery.isNotEmpty()) {
             // Komunikat o braku wyników
@@ -153,7 +174,7 @@ fun CocktailListScreen(
                 Text(
                     text = "Nie znaleziono koktajli pasujących do \"$searchQuery\"",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                 )
             }
         } else {
@@ -170,7 +191,9 @@ fun CocktailListScreen(
                             .clickable { onCocktailSelected(cocktail.id) },
                         shape = RoundedCornerShape(16.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xffc6bbae))
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isDarkMode) DarkSurfaceContainer else LightSurface
+                        )
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,

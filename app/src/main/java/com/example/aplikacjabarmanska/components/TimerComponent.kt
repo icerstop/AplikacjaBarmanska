@@ -26,6 +26,9 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.roundToInt
 import kotlin.math.abs
+import com.example.aplikacjabarmanska.data.ThemeManager
+import com.example.aplikacjabarmanska.ui.theme.LightSurfaceContainer
+import com.example.aplikacjabarmanska.ui.theme.DarkSurfaceContainer
 
 @Composable
 fun CocktailTimer(
@@ -39,12 +42,23 @@ fun CocktailTimer(
     var angle by remember { mutableStateOf(0f) } // 0° to góra (12:00)
     var totalRotations by remember { mutableStateOf(0) } // Zaczynamy od 0 minut
 
+    // ThemeManager do kontroli trybu ciemnego
+    val themeManager = ThemeManager.getInstance()
+    val isDarkMode by themeManager.isDarkTheme.collectAsState()
+
+    // Kolory dostosowane do trybu ciemnego/jasnego
+    val backgroundColor = if (isDarkMode) DarkSurfaceContainer else LightSurfaceContainer
+    val textColor = if (isDarkMode) Color.White else Color.Black
+    val accentColor = MaterialTheme.colorScheme.primary
+    val dialColor = if (isDarkMode) Color(0xFF6650a4) else Color(0xFF6650a4)
+    val dialBackgroundColor = if (isDarkMode) Color(0xFF444444) else Color(0xFFE0E0E0)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFFE0D6C9))
+            .background(backgroundColor)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -52,7 +66,8 @@ fun CocktailTimer(
             text = "Minutnik",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 16.dp),
+            color = textColor
         )
 
         // Wyświetlanie pozostałego czasu
@@ -60,7 +75,8 @@ fun CocktailTimer(
             text = formattedTime,
             fontSize = 40.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 8.dp),
+            color = textColor
         )
 
         // Okrągłe pokrętło (tylko gdy timer nie działa)
@@ -75,6 +91,9 @@ fun CocktailTimer(
                     angle = angle,
                     totalRotations = totalRotations,
                     selectedSeconds = selectedSeconds,
+                    isDarkMode = isDarkMode,
+                    dialColor = dialColor,
+                    dialBackgroundColor = dialBackgroundColor,
                     onAngleChange = { newAngle, rotationChange ->
                         angle = newAngle
 
@@ -102,12 +121,12 @@ fun CocktailTimer(
                         },
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6650a4)
+                        color = accentColor
                     )
                     Text(
                         text = if (totalRotations > 0 || selectedSeconds > 0) "${totalRotations} min" else "Obróć, aby ustawić",
                         fontSize = 14.sp,
-                        color = Color.Gray
+                        color = if (isDarkMode) Color.LightGray else Color.Gray
                     )
                 }
             }
@@ -119,26 +138,42 @@ fun CocktailTimer(
                     .padding(vertical = 16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                QuickTimeChip(seconds = 30, onClick = {
-                    selectedSeconds = 30
-                    totalRotations = 0
-                    angle = 180f // Pół obrotu = 30 sekund
-                })
-                QuickTimeChip(seconds = 60, onClick = {
-                    selectedSeconds = 60
-                    totalRotations = 1
-                    angle = 0f // Pełny obrót = 1 minuta
-                })
-                QuickTimeChip(seconds = 120, onClick = {
-                    selectedSeconds = 120
-                    totalRotations = 2
-                    angle = 0f // 2 pełne obroty = 2 minuty
-                })
-                QuickTimeChip(seconds = 180, onClick = {
-                    selectedSeconds = 180
-                    totalRotations = 3
-                    angle = 0f // 3 pełne obroty = 3 minuty
-                })
+                QuickTimeChip(
+                    seconds = 30,
+                    isDarkMode = isDarkMode,
+                    onClick = {
+                        selectedSeconds = 30
+                        totalRotations = 0
+                        angle = 180f // Pół obrotu = 30 sekund
+                    }
+                )
+                QuickTimeChip(
+                    seconds = 60,
+                    isDarkMode = isDarkMode,
+                    onClick = {
+                        selectedSeconds = 60
+                        totalRotations = 1
+                        angle = 0f // Pełny obrót = 1 minuta
+                    }
+                )
+                QuickTimeChip(
+                    seconds = 120,
+                    isDarkMode = isDarkMode,
+                    onClick = {
+                        selectedSeconds = 120
+                        totalRotations = 2
+                        angle = 0f // 2 pełne obroty = 2 minuty
+                    }
+                )
+                QuickTimeChip(
+                    seconds = 180,
+                    isDarkMode = isDarkMode,
+                    onClick = {
+                        selectedSeconds = 180
+                        totalRotations = 3
+                        angle = 0f // 3 pełne obroty = 3 minuty
+                    }
+                )
             }
         }
 
@@ -179,10 +214,14 @@ private fun CircularTimerDial(
     angle: Float,
     totalRotations: Int,
     selectedSeconds: Int,
+    isDarkMode: Boolean,
+    dialColor: Color,
+    dialBackgroundColor: Color,
     onAngleChange: (Float, Int) -> Unit
 ) {
-    val dialColor = Color(0xFF6650a4)
-    val backgroundColor = Color(0xFFE0E0E0)
+    val textColor = if (isDarkMode) Color.White else Color.Black
+    val markerColor = if (isDarkMode) Color.LightGray else Color.DarkGray
+
     var lastAngle by remember { mutableStateOf(angle) }
 
     Box(
@@ -224,7 +263,7 @@ private fun CircularTimerDial(
 
             // Tło tarczy
             drawCircle(
-                color = backgroundColor,
+                color = dialBackgroundColor,
                 radius = radius,
                 center = center
             )
@@ -288,7 +327,7 @@ private fun CircularTimerDial(
                 )
 
                 drawLine(
-                    color = Color.DarkGray,
+                    color = markerColor,
                     start = start,
                     end = end,
                     strokeWidth = markerWidth
@@ -311,7 +350,7 @@ private fun CircularTimerDial(
                         labelX,
                         labelY + 10f,
                         android.graphics.Paint().apply {
-                            color = android.graphics.Color.DKGRAY
+                            color = if (isDarkMode) android.graphics.Color.LTGRAY else android.graphics.Color.DKGRAY
                             textSize = 32f
                             textAlign = android.graphics.Paint.Align.CENTER
                             typeface = android.graphics.Typeface.create(
@@ -336,6 +375,7 @@ private fun CircularTimerDial(
 @Composable
 private fun QuickTimeChip(
     seconds: Int,
+    isDarkMode: Boolean,
     onClick: () -> Unit
 ) {
     val minutes = seconds / 60
@@ -350,7 +390,8 @@ private fun QuickTimeChip(
         onClick = onClick,
         label = { Text(label) },
         colors = AssistChipDefaults.assistChipColors(
-            containerColor = Color(0xFFE8E0FF)
+            containerColor = if (isDarkMode) Color(0xFF3D3D3D) else Color(0xFFE8E0FF),
+            labelColor = if (isDarkMode) Color.White else Color.Black
         )
     )
 }

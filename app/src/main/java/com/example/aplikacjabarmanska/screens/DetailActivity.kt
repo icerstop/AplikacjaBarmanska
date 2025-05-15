@@ -22,6 +22,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Share
 import com.example.aplikacjabarmanska.isTablet
 import androidx.compose.foundation.rememberScrollState
@@ -35,6 +37,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import android.content.Intent
 import android.content.Context
 import androidx.activity.compose.BackHandler
+import com.example.aplikacjabarmanska.data.ThemeManager
+import com.example.aplikacjabarmanska.ui.theme.LightAppBarColor
+import com.example.aplikacjabarmanska.ui.theme.DarkAppBarColor
+import com.example.aplikacjabarmanska.ui.theme.LightSurface
+import com.example.aplikacjabarmanska.ui.theme.DarkSurface
 
 
 class DetailActivity : ComponentActivity() {
@@ -45,6 +52,8 @@ class DetailActivity : ComponentActivity() {
 
         val isTablet = resources.configuration.screenWidthDp >= 600
         if (isTablet) {
+            // W trybie tabletowym nie pokazujemy oddzielnego activity
+            // po prostu kończymy tę aktywność i wracamy do MainActivity
             finish()
             return
         }
@@ -80,6 +89,10 @@ fun CocktailDetailScreenWithTimer(cocktailId: Int, timerViewModel: TimerViewMode
     val formattedTime by timerViewModel.formattedTime.collectAsState()
     val isRunning by timerViewModel.isRunning.collectAsState()
 
+    // ThemeManager do kontroli trybu ciemnego
+    val themeManager = ThemeManager.getInstance()
+    val isDarkMode by themeManager.isDarkTheme.collectAsState()
+
     LaunchedEffect(cocktailId) {
         val db = CocktailDatabase.getDatabase(context)
         cocktail = db.cocktailDao().getAll().find { it.id == cocktailId }
@@ -90,14 +103,14 @@ fun CocktailDetailScreenWithTimer(cocktailId: Int, timerViewModel: TimerViewMode
             cocktail?.let {
                 FloatingActionButton(
                     onClick = { shareIngredients(context, it)},
-                    containerColor = Color(0xFF988B78),
+                    containerColor = if (isDarkMode) MaterialTheme.colorScheme.primary else Color(0xFF988B78),
                     contentColor = Color.White
                 ) {
                     Icon(Icons.Default.Share, contentDescription = "Udostępnij składniki")
                 }
             }
         },
-        containerColor = Color(0xffe6e2dc)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (cocktail != null) {
             Column(
@@ -126,9 +139,19 @@ fun CocktailDetailScreenWithTimer(cocktailId: Int, timerViewModel: TimerViewMode
                             }
                         }
                     },
+                    actions = {
+                        // Przełącznik trybu ciemnego
+                        IconButton(onClick = { themeManager.toggleTheme() }) {
+                            Icon(
+                                imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                contentDescription = if (isDarkMode) "Przełącz na tryb jasny" else "Przełącz na tryb ciemny",
+                                tint = if (isDarkMode) Color.White else Color.Black
+                            )
+                        }
+                    },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xffc6bbae),
-                        titleContentColor = Color.Black
+                        containerColor = if (isDarkMode) DarkAppBarColor else LightAppBarColor,
+                        titleContentColor = if (isDarkMode) Color.White else Color.Black
                     )
                 )
 
@@ -149,11 +172,22 @@ fun CocktailDetailScreenWithTimer(cocktailId: Int, timerViewModel: TimerViewMode
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Tekstowe informacje
-                    Text("Składniki:", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Składniki:",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                     Spacer(Modifier.height(4.dp))
-                    Text(cocktail!!.ingredients, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        cocktail!!.ingredients,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                     Spacer(Modifier.height(12.dp))
-                    Text("Sposób przygotowania:\n${cocktail!!.instructions}")
+                    Text(
+                        "Sposób przygotowania:\n${cocktail!!.instructions}",
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -162,12 +196,16 @@ fun CocktailDetailScreenWithTimer(cocktailId: Int, timerViewModel: TimerViewMode
                         isRunning = isRunning,
                         onStart = { seconds -> timerViewModel.startTimer(seconds) },
                         onStop = { timerViewModel.stopTimer() },
-                        onReset = { timerViewModel.resetTimer()}
+                        onReset = { timerViewModel.resetTimer() }
                     )
                 }
             }
         } else {
-            Text("Nie znaleziono koktajlu", modifier = Modifier.padding(16.dp))
+            Text(
+                "Nie znaleziono koktajlu",
+                modifier = Modifier.padding(16.dp),
+                color = MaterialTheme.colorScheme.onBackground
+            )
         }
     }
 }

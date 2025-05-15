@@ -20,6 +20,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.example.aplikacjabarmanska.screens.CategorySelectionScreen
 import androidx.activity.compose.BackHandler
+import com.example.aplikacjabarmanska.data.ThemeManager
+import com.example.aplikacjabarmanska.data.InitializeSystemTheme
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.core.tween
 
 class MainActivity : ComponentActivity() {
 
@@ -39,6 +46,9 @@ class MainActivity : ComponentActivity() {
         )[TimerViewModel::class.java]
 
         setContent {
+            // Inicjalizacja z ustawieniami systemowymi
+            InitializeSystemTheme()
+
             AplikacjaBarmanskaTheme {
                 val tablet = isTablet()
                 var selectedId by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -59,38 +69,86 @@ class MainActivity : ComponentActivity() {
                 if (tablet) {
                     if (selectedCategory == null) {
                         // Gdy nie wybrano kategorii, pokazuj ekran kategorii na całej szerokości
-                        CategorySelectionScreen { category ->
-                            selectedCategory = category
-                            viewModel.selectCategory(category)
-                        }
+                        CategorySelectionScreen(
+                            onCategorySelected = { category ->
+                                selectedCategory = category
+                                viewModel.selectCategory(category)
+                            }
+                        )
                     } else {
                         // Po wybraniu kategorii, pokazuj standardowy układ z podziałem
-                        Row(modifier = Modifier.fillMaxSize()) {
-                            Box(modifier = Modifier.weight(1f)) {
-                                CocktailListScreen(
-                                    viewModel = viewModel,
-                                    onCocktailSelected = { id -> selectedId = id },
-                                    onBackToCategories = {
-                                        selectedCategory = null
-                                        viewModel.selectCategory(null)
-                                        selectedId = null // Resetuj również wybrany koktajl
-                                    }
-                                )
-                            }
-                            Box(modifier = Modifier.weight(2f).padding(16.dp)) {
-                                selectedId?.let {
-                                    CocktailDetailScreenWithTimer(cocktailId = it, timerViewModel = timerViewModel)
+                        var localSelectedId by remember { mutableStateOf(selectedId) }
+                        var isContentReady by remember { mutableStateOf(false) }
+
+                        // Pobranie pierwszego ID z listy przy zmianie kategorii
+                        val cocktails by viewModel.filteredCocktails.collectAsState()
+
+                        // Automatycznie wybierz pierwszy koktajl z listy, jeśli żaden nie jest wybrany
+                        LaunchedEffect(cocktails) {
+                            if (cocktails.isNotEmpty()) {
+                                if (localSelectedId == null) {
+                                    localSelectedId = cocktails[0].id
+                                    selectedId = cocktails[0].id
+                                    timerViewModel.setCocktailId(cocktails[0].id)
                                 }
+                                // Krótkie opóźnienie dla upewnienia się, że dane zostały załadowane
+                                kotlinx.coroutines.delay(50)
+                                isContentReady = true
+                            }
+                        }
+
+                        // Pokazuj zawartość dopiero, gdy wszystko jest gotowe
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = isContentReady,
+                            enter = androidx.compose.animation.fadeIn(
+                                initialAlpha = 0.3f,
+                                animationSpec = androidx.compose.animation.core.tween(200)
+                            )
+                        ) {
+                            Row(modifier = Modifier.fillMaxSize()) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    CocktailListScreen(
+                                        viewModel = viewModel,
+                                        onCocktailSelected = { id ->
+                                            selectedId = id
+                                            localSelectedId = id
+                                        },
+                                        onBackToCategories = {
+                                            selectedCategory = null
+                                            viewModel.selectCategory(null)
+                                            selectedId = null // Resetuj również wybrany koktajl
+                                            localSelectedId = null
+                                            isContentReady = false
+                                        }
+                                    )
+                                }
+                                Box(modifier = Modifier.weight(2f).padding(16.dp)) {
+                                    localSelectedId?.let {
+                                        CocktailDetailScreenWithTimer(cocktailId = it, timerViewModel = timerViewModel)
+                                    }
+                                }
+                            }
+                        }
+
+                        // Wskaźnik ładowania, gdy zawartość nie jest jeszcze gotowa
+                        if (!isContentReady) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
                             }
                         }
                     }
                 } else {
                     // Kod dla telefonu
                     if (selectedCategory == null) {
-                        CategorySelectionScreen { category ->
-                            selectedCategory = category
-                            viewModel.selectCategory(category)
-                        }
+                        CategorySelectionScreen(
+                            onCategorySelected = { category ->
+                                selectedCategory = category
+                                viewModel.selectCategory(category)
+                            }
+                        )
                     } else {
                         CocktailListScreen(
                             viewModel = viewModel,
