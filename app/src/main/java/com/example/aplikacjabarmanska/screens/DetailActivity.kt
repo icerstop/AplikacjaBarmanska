@@ -94,11 +94,12 @@ class DetailActivity : ComponentActivity() {
                             )
                         )
                     }
-                ) { padding ->
+                ) { innerPadding ->
                     CocktailDetailScreenContent(
                         cocktailId = cocktailId,
                         timerViewModel = timerViewModel,
-                        showBackButton = false
+                        showBackButton = false,
+                        contentPadding = innerPadding
                     )
                 }
             }
